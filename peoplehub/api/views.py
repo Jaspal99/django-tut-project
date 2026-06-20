@@ -13,7 +13,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView,RetrieveUpdateDestroyAPIView
 from rest_framework.mixins import CreateModelMixin,ListModelMixin,UpdateModelMixin,RetrieveModelMixin,DestroyModelMixin
-
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 @api_view(["GET","PATCH","PUT"])
 def singleobj(request,id):
@@ -51,5 +52,12 @@ class SingleObjAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = PersonModelSerializer
 
 class MultiObjAPIView(ListCreateAPIView):
+    # authentication_classes = [TokenAuthentication]
     queryset = Person.objects.all()
     serializer_class = PersonModelSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get(self,request,*args,**kwargs):
+        print (request.user)
+        response = super().get(request,*args,**kwargs)
+        return response
