@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
+from rest_framework.mixins import CreateModelMixin,ListModelMixin,UpdateModelMixin,RetrieveModelMixin,DestroyModelMixin
 
 # Create your views here.
 @api_view(["GET","PATCH","PUT"])
@@ -44,38 +46,27 @@ def multipleobj(request):
     return Response(serializer.data)
 
 
-class SingleObjAPIView(APIView):
-    def get(self,request,id):
-        data = get_object_or_404(Person,id=id)
-        serializer = PersonModelSerializer(data)
-        return Response(serializer.data)
+class SingleObjAPIView(GenericAPIView,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin):
+    queryset = Person.objects.all()
+    serializer_class = PersonModelSerializer
+    def get(self,request,*args,**kwargs):
+        return self.retrieve(request,*args,**kwargs)
 
-    def patch(self,request,id):
-        data = get_object_or_404(Person,id=id)
-        serializer = PersonModelSerializer(data,data=request.data,partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"updated":"successfully"},status=status.HTTP_200_OK)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    def patch(self,request,*args,**kwargs):
+        return self.partial_update(request,*args,**kwargs)
 
-    def put(self,request,id):
-        data = get_object_or_404(Person,id=id)
-        serializer = PersonModelSerializer(data,data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"updated":"successfully"},status=status.HTTP_200_OK)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-
-class MultiObjAPIView(APIView):
-    def get(self,request):
-        data = Person.objects.all()
-        serializer = PersonModelSerializer(data,many=True)
-        return Response(serializer.data)
+    def put(self,request,*args,**kwargs):
+        return self.update(request,*args,**kwargs)
     
-    def post(self,request):
-        serializer = PersonModelSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"created":"successfully"},status=status.HTTP_201_CREATED)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    def delete(self,request,*args,**kwargs):
+        return self.destroy(request,*args,**kwargs)
+
+
+class MultiObjAPIView(ListModelMixin,CreateModelMixin,GenericAPIView):
+    queryset = Person.objects.all()
+    serializer_class = PersonModelSerializer
+    def get(self,request,*args,**kwargs):
+        return self.list(request,*args,**kwargs)
+    
+    def post(self,request,*args,**kwargs):
+        return self.create(request,*args,**kwargs)
