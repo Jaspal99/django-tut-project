@@ -7,10 +7,29 @@ import io
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-
+from django.shortcuts import get_object_or_404
 # Create your views here.
-def singleobj(request):
-    data = Person.objects.get(id=1)
+@csrf_exempt
+def singleobj(request,id):
+    data = get_object_or_404(Person,id=id)
+    if request.method == "PUT":
+        json = request.body
+        stream = io.BytesIO(json)
+        parsed_data = JSONParser().parse(stream)
+        serializer = PersonSerializer(data,data=parsed_data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({"updated":"successfully"},status=status.HTTP_200_OK)
+        return JsonResponse(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    if request.method == "PATCH":
+        json = request.body
+        stream = io.BytesIO(json)
+        parsed_data = JSONParser().parse(stream)
+        serializer = PersonSerializer(data,data=parsed_data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({"updated":"successfully"},status=status.HTTP_200_OK)
+        return JsonResponse(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     serializer = PersonSerializer(data)
     return JsonResponse(serializer.data)
 
